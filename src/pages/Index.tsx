@@ -106,6 +106,8 @@ const Index = () => {
   const [followPackDescription, setFollowPackDescription] = useState('');
   const [followPackImage, setFollowPackImage] = useState('');
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [gradientColor1, setGradientColor1] = useState('#3b82f6'); // Blue
+  const [gradientColor2, setGradientColor2] = useState('#8b5cf6'); // Purple
 
   const { toast } = useToast();
   const { mutateAsync: publishEvent } = useNostrPublish();
@@ -307,8 +309,8 @@ const Index = () => {
     setGeneratingImage(true);
 
     try {
-      // Generate image with title overlay
-      const blob = await generateCoverImage('/follow-pack.png', followPackTitle);
+      // Generate image with gradient background and title
+      const blob = await generateCoverImage(followPackTitle, gradientColor1, gradientColor2);
 
       // Convert blob to File
       const file = new File([blob], 'follow-pack-cover.png', { type: 'image/png' });
@@ -663,6 +665,58 @@ const Index = () => {
                       />
                     </div>
 
+                    {/* Gradient Color Pickers */}
+                    <div className="space-y-3">
+                      <Label>Image Gradient Colors</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="color1" className="text-xs text-gray-600 dark:text-gray-400">
+                            Start Color
+                          </Label>
+                          <div className="flex gap-2">
+                            <input
+                              id="color1"
+                              type="color"
+                              value={gradientColor1}
+                              onChange={(e) => setGradientColor1(e.target.value)}
+                              className="h-10 w-14 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
+                            />
+                            <Input
+                              type="text"
+                              value={gradientColor1}
+                              onChange={(e) => setGradientColor1(e.target.value)}
+                              placeholder="#3b82f6"
+                              className="flex-1 font-mono text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="color2" className="text-xs text-gray-600 dark:text-gray-400">
+                            End Color
+                          </Label>
+                          <div className="flex gap-2">
+                            <input
+                              id="color2"
+                              type="color"
+                              value={gradientColor2}
+                              onChange={(e) => setGradientColor2(e.target.value)}
+                              className="h-10 w-14 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
+                            />
+                            <Input
+                              type="text"
+                              value={gradientColor2}
+                              onChange={(e) => setGradientColor2(e.target.value)}
+                              placeholder="#8b5cf6"
+                              className="flex-1 font-mono text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Choose colors for the background gradient of your generated image
+                      </p>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="image">Cover Image URL (optional)</Label>
                       <div className="flex gap-2">
@@ -694,29 +748,52 @@ const Index = () => {
                         </Button>
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Generate custom image with title, or leave empty to use default
+                        Generate an image with custom gradient, or provide your own URL
                       </p>
                     </div>
 
                     {/* Image Preview */}
-                    <div className="space-y-2">
-                      <Label>Cover Image Preview</Label>
-                      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
-                        <img
-                          src={followPackImage.trim() || '/follow-pack.png'}
-                          alt="Follow pack cover"
-                          className="w-full h-48 object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/follow-pack.png';
-                          }}
-                        />
+                    {followPackImage.trim() && (
+                      <div className="space-y-2">
+                        <Label>Cover Image Preview</Label>
+                        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
+                          <img
+                            src={followPackImage.trim()}
+                            alt="Follow pack cover"
+                            className="w-full h-48 object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                          <ImageIcon className="h-3 w-3" />
+                          Custom image ready
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                        <ImageIcon className="h-3 w-3" />
-                        {followPackImage.trim() ? 'Using custom image' : 'Using default image'}
-                      </p>
-                    </div>
+                    )}
+
+                    {/* Live Gradient Preview */}
+                    {!followPackImage.trim() && (
+                      <div className="space-y-2">
+                        <Label>Cover Preview</Label>
+                        <div
+                          className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-32 flex items-center justify-center"
+                          style={{
+                            background: `linear-gradient(135deg, ${gradientColor1}, ${gradientColor2})`
+                          }}
+                        >
+                          <p className="text-white font-bold text-2xl drop-shadow-lg">
+                            {followPackTitle || 'Your Title Here'}
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                          <ImageIcon className="h-3 w-3" />
+                          Preview of your cover (click Generate to create full image)
+                        </p>
+                      </div>
+                    )}
 
                     {publishedEventId && (
                       <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
